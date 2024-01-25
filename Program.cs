@@ -1,3 +1,4 @@
+using System.Text.Json;
 using VirtualLibrary.MiddleWare;
 using VirtualLibrary.Models;
 
@@ -6,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddDbContext<VirtualLibraryContext>();
+builder.Services.Configure<ErrHandlerMiddleWareOptions>(builder.Configuration.GetSection("MiddleWare"));
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -26,6 +28,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.UseMiddleware<ErrHandlerMiddleWare>(builder.Configuration);
+// Custom Middleware
+app.UseErrHandlerMiddleware();
 
 app.Run();
