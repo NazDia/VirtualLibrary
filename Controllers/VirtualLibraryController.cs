@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using VirtualLibrary.Interfaces;
 using VirtualLibrary.Models;
 
 namespace VirtualLibrary.Controllers;
@@ -7,9 +8,11 @@ namespace VirtualLibrary.Controllers;
 [Route("api/v1.0/library")]
 public class VirtualLibraryController : ControllerBase {
     private readonly IConfiguration _config;
-    public VirtualLibraryController(IConfiguration configuration)
+    private readonly IRepository<VirtualLibraryContext> _repository;
+    public VirtualLibraryController(IConfiguration configuration, IRepository<VirtualLibraryContext> repository)
     {
         _config = configuration;
+        _repository = repository;
     }
 
     // POST /api/v1.0/library/users
