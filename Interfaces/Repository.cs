@@ -2,11 +2,11 @@ using VirtualLibrary.Models;
 
 namespace VirtualLibrary.Interfaces;
 
-public interface IRepository<T>: IDisposable {
+public interface IRepository<T> {
     public Task<T> GetInstance();
 }
 
-public interface IVirtualLibraryInterface: IDisposable, IRepository<VirtualLibraryContext> {
+public interface IVirtualLibraryInterface: IRepository<VirtualLibraryContext> {
     public Task<ListModels<LibraryUserModel>> ListUsers(int offset, int limit);
     public Task<bool> DeleteUser(long userId);
     public void CreateUser(CreateUserModel createUserModel);

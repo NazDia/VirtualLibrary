@@ -13,11 +13,6 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         _dbContextFactory = dbContextFactory;
     }
 
-    public void Dispose()
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<VirtualLibraryContext> GetInstance() {
         var context = await _dbContextFactory.CreateDbContextAsync();
         context.Database.EnsureCreated();

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using VirtualLibrary.Interfaces;
 using VirtualLibrary.MiddleWare;
@@ -9,8 +10,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddDbContextFactory<VirtualLibraryContext>();
-builder.Services.AddDbContext<VirtualLibraryContext>();
+string cs = builder.Configuration.GetConnectionString("Default");
+
+builder.Services.AddDbContextFactory<VirtualLibraryContext>(opt => opt.UseSqlServer(cs), ServiceLifetime.Singleton);
+builder.Services.AddDbContext<VirtualLibraryContext>(opt => opt.UseSqlServer(cs));
 builder.Services.AddScoped<DbContextFactory<VirtualLibraryContext>>();
 // builder.Services.AddScoped<IRepository<VirtualLibraryContext>, VirtualLibraryRepository>();
 builder.Services.AddScoped<IVirtualLibraryInterface, VirtualLibraryRepository>();

@@ -1,5 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace VirtualLibrary.Models;
 
+[PrimaryKey(nameof(Id))]
 public class BookModel {
     internal long Id { get; set; }
     public string Name { get; set; } = "";
