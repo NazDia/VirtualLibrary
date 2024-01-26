@@ -18,10 +18,17 @@ public class VirtualLibraryContext: DbContext {
         modelBuilder.Entity<BookModel>()
             .HasMany(b => b.Reviews)
             .WithOne(r => r.BookModel);
+        modelBuilder.Entity<AuthorModel>()
+            .HasMany(a => a.Subsriptions)
+            .WithOne(s => s.Author);
+        modelBuilder.Entity<LibraryUserModel>()
+            .HasMany(u => u.Subsriptions)
+            .WithOne(s => s.User);
         base.OnModelCreating(modelBuilder);
     }
     public DbSet<AuthorModel> AuthorModels { get; set; }
     public DbSet<BookModel> BookModels { get; set; }
     public DbSet<ReviewModel> ReviewModels { get; set; }
     public DbSet<LibraryUserModel> LibraryUserModels { get; set;}
+    public DbSet<SubsriptionModel> SubsriptionModels { get; set; }
 }

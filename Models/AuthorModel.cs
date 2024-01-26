@@ -6,4 +6,5 @@ public class AuthorModel {
     public string Nationality { get; set; } = "";
     public DateTime DateOfBirth { get; set; }
     public ICollection<BookModel> Books { get; set; }
+    public ICollection<SubsriptionModel> Subsriptions { get; set; }
 }
