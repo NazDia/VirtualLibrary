@@ -15,4 +15,13 @@ public interface IVirtualLibraryInterface: IRepository<VirtualLibraryContext> {
     public Task<bool> DeleteSubscription(long userId, long authorId);
     public void CreateAuthor(CreateAuthorModel createAuthorModel);
     public Task<AuthorModel?> DetailsAuthor(long authorId);
+    public Task<BookModel> CreateBook(long authorId, CreateBookModel createBookModel);
+    public Task<ListModels<BookModel>> ListBooks(
+        long? authorId,
+        string? editorialName,
+        DateTime? before,
+        DateTime? after,
+        int offset,
+        int limit
+    );
 }

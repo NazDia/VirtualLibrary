@@ -88,13 +88,23 @@ public class VirtualLibraryController : ControllerBase {
         int limit,
         bool? sort
     ) {
-        throw new NotImplementedException();
+        var ret = await _repository.ListBooks(
+            authorId,
+            editorialName,
+            before,
+            after,
+            offset,
+            limit
+        );
+        return Ok(ret);
     }
 
     // POST /api/v1.0/library/authors/{authorId}/books
     [HttpPost("authors/{authorId}/books")]
-    public async Task<ActionResult<BookModel>> CreateBook(long authorId, [FromBody] BookModel bookModel) {
-        throw new NotImplementedException();
+    public async Task<ActionResult<BookModel>> CreateBook(long authorId, [FromBody] CreateBookModel bookModel) {
+        var ret = await _repository.CreateBook(authorId, bookModel);
+        if (ret == null) return NotFound();
+        return Ok(ret);
     }
 
     // GET /api/v1.0/library/books/reviews?reviewType=int?&sort=bool?&offset=int&limit=int

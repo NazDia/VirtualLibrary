@@ -7,8 +7,8 @@ public class LibraryUserModel {
     public string Name { get; set; } = "";
     public string Email { get; set; } = "";
     public string? Pfp_url { get; set; }
-    public ICollection<ReviewModel> Reviews { get; set; }
-    public ICollection<SubsriptionModel> Subsriptions { get; set; }
+    public ICollection<ReviewModel> Reviews { get; set; } = new List<ReviewModel>();
+    public ICollection<SubsriptionModel> Subsriptions { get; set; } = new List<SubsriptionModel>();
 }
 
 [PrimaryKey(nameof(UserId), nameof(AuthorId))]

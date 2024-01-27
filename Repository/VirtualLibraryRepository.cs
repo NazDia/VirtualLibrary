@@ -30,7 +30,7 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         ListModels<LibraryUserModel> listModels = new ListModels<LibraryUserModel> { 
             Limit = limit,
             Offset = offset,
-            Users = users
+            Elements = users
         };
         return listModels;
     }
@@ -114,5 +114,56 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         var context = await GetInstance();
         var author = await context.AuthorModels.FindAsync(authorId);
         return author;
+    }
+
+    public async Task<BookModel?> CreateBook(long authorId, CreateBookModel createBookModel) {
+        var context = await GetInstance();
+        var author = await context.AuthorModels.FindAsync(authorId);
+        if (author == null) return null;
+        BookModel bookModel = new BookModel {
+            Id = 0,
+            Name = createBookModel.Name,
+            Editorial = createBookModel.Editorial,
+            Pages = createBookModel.Pages,
+            PublicationDate = createBookModel.PublicationDate,
+            Isbn = createBookModel.Isbn,
+            Url = createBookModel.Url,
+            AuthorModelId = authorId,
+            AuthorModel = author
+        };
+        context.BookModels.Add(bookModel);
+        await context.SaveChangesAsync();
+        return bookModel;
+    }
+
+    public async Task<ListModels<BookModel>> ListBooks(
+        long? authorId,
+        string? editorialName,
+        DateTime? before,
+        DateTime? after,
+        int offset,
+        int limit
+    ) {
+        Func<long?, long, bool> authorCheck = (x, y) => x == null || x == y;
+        Func<string?, string, bool> editorialCheck = (x, y) => x == null || x == y;
+        Func<DateTime?, DateTime, bool> beforeCheck = (x, y) => x == null || x < y;
+        Func<DateTime?, DateTime, bool> afterCheck = (x, y) => x == null || x > y;
+        var context = await GetInstance();
+        var books = await context.BookModels
+            .Where(b => 
+                authorCheck(authorId, b.AuthorModelId) &&
+                editorialCheck(editorialName, b.Editorial) &&
+                beforeCheck(before, b.PublicationDate) &&
+                afterCheck(after, b.PublicationDate)
+            )
+            .Skip(offset)
+            .Take(limit)
+            .ToListAsync();
+        ListModels<BookModel> listModels = new ListModels<BookModel> {
+            Offset = offset,
+            Limit = limit,
+            Elements = books
+        };
+        return listModels;
     }
 }
