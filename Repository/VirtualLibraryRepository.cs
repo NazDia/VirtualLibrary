@@ -66,15 +66,26 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         return true;
     }
 
-    public async void CreateSubscription(long userId, long authorId) {
-        var context = GetInstance();
+    public async Task<bool> CreateSubscription(long userId, long authorId) {
+        var context = await GetInstance();
+        var context1 = await GetInstance();
+        // var wcontext = await context;
+        // var wcontext1 = await context1;
+        var user = context.LibraryUserModels.FindAsync(userId);
+        var author = context1.AuthorModels.FindAsync(authorId);
+        var wuser = await user;
+        if (wuser == null) return false;
+        var wauthor = await author;
+        if (wauthor == null) return false;
         SubsriptionModel subsriptionModel = new SubsriptionModel {
             UserId = userId,
-            AuthorId = authorId
+            User = wuser,
+            AuthorId = authorId,
+            Author = wauthor
         };
-        var wcontext = await context;
-        wcontext.Add(subsriptionModel);
-        await wcontext.SaveChangesAsync();
+        context.Add(subsriptionModel);
+        await context.SaveChangesAsync();
+        return true;
     }
 
     public async Task<bool> DeleteSubscription(long userId, long authorId) {

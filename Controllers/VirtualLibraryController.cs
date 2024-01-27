@@ -49,7 +49,8 @@ public class VirtualLibraryController : ControllerBase {
     // POST /api/v1.0/library/users/{userId}/subscribe-to-author/{authorId}
     [HttpPost("users/{userId}/subscribe-to-author/{authorId}")]
     public async Task<IActionResult> SubscribeToAuthor(long userId, long authorId) {
-        _repository.CreateSubscription(userId, authorId);
+        var found = await _repository.CreateSubscription(userId, authorId);
+        if (!found) return NotFound();
         return NoContent();
     }
 
