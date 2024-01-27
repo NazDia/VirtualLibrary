@@ -8,3 +8,9 @@ public class AuthorModel {
     public ICollection<BookModel> Books { get; set; }
     public ICollection<SubsriptionModel> Subsriptions { get; set; }
 }
+
+public class CreateAuthorModel {
+    public string Name { get; set; } = "";
+    public string Nationality { get; set; } = "";
+    public DateTime BirthDate { get; set; }
+}

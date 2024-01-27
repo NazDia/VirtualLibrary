@@ -13,4 +13,6 @@ public interface IVirtualLibraryInterface: IRepository<VirtualLibraryContext> {
     public Task<bool> SetPfp(long userId, string url);
     public Task<bool> CreateSubscription(long userId, long authorId);
     public Task<bool> DeleteSubscription(long userId, long authorId);
+    public void CreateAuthor(CreateAuthorModel createAuthorModel);
+    public Task<AuthorModel?> DetailsAuthor(long authorId);
 }

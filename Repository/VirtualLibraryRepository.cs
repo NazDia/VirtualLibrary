@@ -96,4 +96,23 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         await context.SaveChangesAsync();
         return true;
     }
+
+    public async void CreateAuthor(CreateAuthorModel createAuthorModel) {
+        var context = GetInstance();
+        AuthorModel authorModel = new AuthorModel {
+            Id = 0,
+            Name = createAuthorModel.Name,
+            DateOfBirth = createAuthorModel.BirthDate,
+            Nationality = createAuthorModel.Nationality
+        };
+        var wcontext = await context;
+        wcontext.AuthorModels.Add(authorModel);
+        await wcontext.SaveChangesAsync();
+    }
+
+    public async Task<AuthorModel?> DetailsAuthor(long authorId) {
+        var context = await GetInstance();
+        var author = await context.AuthorModels.FindAsync(authorId);
+        return author;
+    }
 }

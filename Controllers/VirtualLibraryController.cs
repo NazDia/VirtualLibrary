@@ -64,14 +64,17 @@ public class VirtualLibraryController : ControllerBase {
 
     // POST /api/v1.0/library/authors
     [HttpPost("authors")]
-    public async Task<ActionResult<AuthorModel>> CreateAuthor([FromBody] AuthorModel authorModel) {
-        throw new NotImplementedException();
+    public async Task<ActionResult<AuthorModel>> CreateAuthor([FromBody] CreateAuthorModel authorModel) {
+        _repository.CreateAuthor(authorModel);
+        return NoContent();
     }
 
     // GET /api/v1.0/library/authors/{authorId}
     [HttpGet("authors/{authorId}")]
     public async Task<ActionResult<AuthorModel>> GetAuthor(long authorId) {
-        throw new NotImplementedException();
+        var ret = await _repository.DetailsAuthor(authorId);
+        if (ret == null) return NotFound();
+        return Ok(ret);
     }
 
     // GET /api/v1.0/library/books?authorId=long?&editorialName=string?&before=DateTime?&after=DateTime?&offset=int&limit=int&sort=bool?
