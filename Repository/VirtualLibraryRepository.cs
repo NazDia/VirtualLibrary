@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using VirtualLibrary.Interfaces;
+using VirtualLibrary.Mappers;
 using VirtualLibrary.Models;
 
 namespace VirtualLibrary.Repositories;
@@ -21,16 +22,18 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
     }
 
     
-    public async Task<ListModels<LibraryUserModel>> ListUsers(int offset, int limit) {
+    public async Task<ListModels<ShowUserModel>> ListUsers(int offset, int limit) {
+        IMapper<LibraryUserModel, ShowUserModel> showUserMapper = new ShowUserMapper();
         var context = await GetInstance();
         var users = await context.LibraryUserModels
+            .Include(u => u.Subsriptions)
             .Skip(offset)
             .Take(limit)
             .ToListAsync();
-        ListModels<LibraryUserModel> listModels = new ListModels<LibraryUserModel> { 
+        ListModels<ShowUserModel> listModels = new ListModels<ShowUserModel> { 
             Limit = limit,
             Offset = offset,
-            Elements = users
+            Elements = showUserMapper.lMap(users)
         };
         return listModels;
     }
@@ -46,12 +49,7 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
 
     public async void CreateUser(CreateUserModel createUserModel) {
         var context = GetInstance();
-        LibraryUserModel libraryUserModel = new LibraryUserModel {
-            Id = 0,
-            Name = createUserModel.Name,
-            Email = createUserModel.Email,
-            Pfp_url = createUserModel.Pfp_url
-        };
+        LibraryUserModel libraryUserModel = new UserCreationMapper().map(createUserModel);
         var wcontext = await context;
         wcontext.Add(libraryUserModel);
         await wcontext.SaveChangesAsync();
@@ -69,8 +67,6 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
     public async Task<bool> CreateSubscription(long userId, long authorId) {
         var context = await GetInstance();
         var context1 = await GetInstance();
-        // var wcontext = await context;
-        // var wcontext1 = await context1;
         var user = context.LibraryUserModels.FindAsync(userId);
         var author = context1.AuthorModels.FindAsync(authorId);
         var wuser = await user;
@@ -79,9 +75,7 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         if (wauthor == null) return false;
         SubsriptionModel subsriptionModel = new SubsriptionModel {
             UserId = userId,
-            User = wuser,
             AuthorId = authorId,
-            Author = wauthor
         };
         context.Add(subsriptionModel);
         await context.SaveChangesAsync();
@@ -92,51 +86,44 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         var context = await GetInstance();
         var subscription = await context.SubsriptionModels.FindAsync(userId, authorId);
         if (subscription == null) return false;
-        context.Remove(context);
+        context.Remove(subscription);
         await context.SaveChangesAsync();
         return true;
     }
 
     public async void CreateAuthor(CreateAuthorModel createAuthorModel) {
         var context = GetInstance();
-        AuthorModel authorModel = new AuthorModel {
-            Id = 0,
-            Name = createAuthorModel.Name,
-            DateOfBirth = createAuthorModel.BirthDate,
-            Nationality = createAuthorModel.Nationality
-        };
+        AuthorModel authorModel = new CreateAuthorMapper().map(createAuthorModel);
         var wcontext = await context;
         wcontext.AuthorModels.Add(authorModel);
         await wcontext.SaveChangesAsync();
     }
 
-    public async Task<AuthorModel?> DetailsAuthor(long authorId) {
+    public async Task<ShowAuthorModel?> DetailsAuthor(long authorId) {
+        ShowAuthorMapper showAuthorMapper = new ShowAuthorMapper();
         var context = await GetInstance();
-        var author = await context.AuthorModels.FindAsync(authorId);
-        return author;
+        var author = await context.AuthorModels
+            .Include(a => a.Books)
+            .Include(a => a.Subsriptions)
+            .FirstOrDefaultAsync(a => a.Id == authorId);
+        if (author == null) return null;
+        return showAuthorMapper.map(author);
     }
 
-    public async Task<BookModel?> CreateBook(long authorId, CreateBookModel createBookModel) {
+    public async Task<ShowBookListedModel?> CreateBook(long authorId, CreateBookModel createBookModel) {
         var context = await GetInstance();
-        var author = await context.AuthorModels.FindAsync(authorId);
+        var author = await context.AuthorModels.Include(a => a.Books).FirstOrDefaultAsync(a => a.Id == authorId);
         if (author == null) return null;
-        BookModel bookModel = new BookModel {
-            Id = 0,
-            Name = createBookModel.Name,
-            Editorial = createBookModel.Editorial,
-            Pages = createBookModel.Pages,
-            PublicationDate = createBookModel.PublicationDate,
-            Isbn = createBookModel.Isbn,
-            Url = createBookModel.Url,
-            AuthorModelId = authorId,
-            AuthorModel = author
-        };
+        CreateBookMapper createBookMapper = new CreateBookMapper();
+        var bookModel = createBookMapper.map(createBookModel);
+        bookModel.AuthorModel = author;
+        bookModel.AuthorModelId = authorId;
         context.BookModels.Add(bookModel);
         await context.SaveChangesAsync();
-        return bookModel;
+        return new ShowBookListedMapper().map(bookModel);
     }
 
-    public async Task<ListModels<BookModel>> ListBooks(
+    public async Task<ListModels<ShowBookListedModel>> ListBooks(
         long? authorId,
         string? editorialName,
         DateTime? before,
@@ -144,25 +131,22 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         int offset,
         int limit
     ) {
-        Func<long?, long, bool> authorCheck = (x, y) => x == null || x == y;
-        Func<string?, string, bool> editorialCheck = (x, y) => x == null || x == y;
-        Func<DateTime?, DateTime, bool> beforeCheck = (x, y) => x == null || x < y;
-        Func<DateTime?, DateTime, bool> afterCheck = (x, y) => x == null || x > y;
         var context = await GetInstance();
         var books = await context.BookModels
+            .Include(b => b.AuthorModel)
             .Where(b => 
-                authorCheck(authorId, b.AuthorModelId) &&
-                editorialCheck(editorialName, b.Editorial) &&
-                beforeCheck(before, b.PublicationDate) &&
-                afterCheck(after, b.PublicationDate)
+                (authorId == null || authorId == b.AuthorModelId) &&
+                (editorialName == null || editorialName == b.Editorial) &&
+                (before == null || b.PublicationDate < before) &&
+                (after == null || b.PublicationDate > after)
             )
             .Skip(offset)
             .Take(limit)
             .ToListAsync();
-        ListModels<BookModel> listModels = new ListModels<BookModel> {
+        ListModels<ShowBookListedModel> listModels = new ListModels<ShowBookListedModel> {
             Offset = offset,
             Limit = limit,
-            Elements = books
+            Elements = (new ShowBookListedMapper() as IMapper<BookModel, ShowBookListedModel>).lMap(books)
         };
         return listModels;
     }

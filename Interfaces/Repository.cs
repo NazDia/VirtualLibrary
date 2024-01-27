@@ -7,16 +7,16 @@ public interface IRepository<T> {
 }
 
 public interface IVirtualLibraryInterface: IRepository<VirtualLibraryContext> {
-    public Task<ListModels<LibraryUserModel>> ListUsers(int offset, int limit);
+    public Task<ListModels<ShowUserModel>> ListUsers(int offset, int limit);
     public Task<bool> DeleteUser(long userId);
     public void CreateUser(CreateUserModel createUserModel);
     public Task<bool> SetPfp(long userId, string url);
     public Task<bool> CreateSubscription(long userId, long authorId);
     public Task<bool> DeleteSubscription(long userId, long authorId);
     public void CreateAuthor(CreateAuthorModel createAuthorModel);
-    public Task<AuthorModel?> DetailsAuthor(long authorId);
-    public Task<BookModel> CreateBook(long authorId, CreateBookModel createBookModel);
-    public Task<ListModels<BookModel>> ListBooks(
+    public Task<ShowAuthorModel?> DetailsAuthor(long authorId);
+    public Task<ShowBookListedModel> CreateBook(long authorId, CreateBookModel createBookModel);
+    public Task<ListModels<ShowBookListedModel>> ListBooks(
         long? authorId,
         string? editorialName,
         DateTime? before,
