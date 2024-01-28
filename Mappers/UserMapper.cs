@@ -35,3 +35,15 @@ public class ShowUserMapper : IMapper<LibraryUserModel, ShowUserModel> {
         throw new NotImplementedException();
     }
 }
+public class ShowUserNaiveMapper : IMapper<LibraryUserModel, ShowUserNaive> {
+    public ShowUserNaive map(LibraryUserModel obj) {
+        return new ShowUserNaive {
+            Id = obj.Id,
+            Name = obj.Name
+        };
+    }
+
+    public LibraryUserModel rmap(ShowUserNaive robj) {
+        throw new NotImplementedException();
+    }
+}

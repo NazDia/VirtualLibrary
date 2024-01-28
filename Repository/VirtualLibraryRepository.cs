@@ -150,4 +150,53 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         };
         return listModels;
     }
+    
+    public async Task<ShowReviewModel?> CreateReview(long bookId, long userId, CreateReviewModel createReviewModel) {
+        var context = await GetInstance();
+        var context1 = await GetInstance();
+        var book = context.BookModels.FindAsync(bookId);
+        var user = context1.LibraryUserModels.FindAsync(userId);
+        var wuser = await user;
+        if (await book == null) return null;
+        if (wuser == null) return null;
+        var review = (new CreateReviewMapper()).map(createReviewModel);
+        review.BookModelId = bookId;
+        review.LibraryUserModelId = userId;
+        context.ReviewModels.Add(review);
+        await context.SaveChangesAsync();
+        review.LibraryUserModel = wuser;
+        var ret = (new ShowReviewMapper()).map(review);
+        return ret;
+    }
+    
+    public async Task<ListModels<ShowReviewModel>?> ListReviews(
+        long bookId,
+        int? qual,
+        bool? sort,
+        int offset,
+        int limit
+    ) {
+        var context = await GetInstance();
+        var semiReviews = context.ReviewModels
+            .Include(r => r.LibraryUserModel)
+            .Where(r => 
+                r.BookModelId == bookId &&
+                (qual == null || qual == r.Qualification)
+            )
+            .Skip(offset)
+            .Take(limit);
+        if (sort != null && (bool)sort) {
+            semiReviews = semiReviews.OrderBy(r => r.CreationTime);
+        }
+        else if (sort != null && !(bool)sort) {
+            semiReviews = semiReviews.OrderByDescending(r => r.CreationTime);
+        }
+        var reviews = await semiReviews.ToListAsync();
+        if (reviews == null) return null;
+        return new ListModels<ShowReviewModel> {
+            Offset = offset,
+            Limit = limit,
+            Elements = (new ShowReviewMapper() as IMapper<ReviewModel, ShowReviewModel>).lMap(reviews)
+        };
+    }
 }

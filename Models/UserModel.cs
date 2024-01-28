@@ -34,3 +34,8 @@ public class ShowUserModel {
     public DateTime CreationTime { get; set; }
     public int SubscriptionCount { get; set; }
 }
+
+public class ShowUserNaive {
+    public long Id { get; set; }
+    public string Name { get; set; } = "";
+}

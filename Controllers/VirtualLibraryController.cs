@@ -109,13 +109,22 @@ public class VirtualLibraryController : ControllerBase {
 
     // GET /api/v1.0/library/books/reviews?reviewType=int?&sort=bool?&offset=int&limit=int
     [HttpGet("books/{bookId}/reviews")]
-    public async Task<ActionResult<ListModels<ReviewModel>>> ListReviews(long bookId, int? reviewType, bool? sort, int offset, int limit) {
-        throw new NotImplementedException();
+    public async Task<ActionResult<ListModels<ShowReviewModel>>> ListReviews(
+        long bookId,
+        int? reviewType,
+        bool? sort,
+        int offset,
+        int limit) {
+        var ret = await _repository.ListReviews(bookId, reviewType, sort, offset, limit);
+        if (ret == null) return NotFound();
+        return Ok(ret);
     }
 
     // POST /api/v1.0/library/books/{bookId}/reviews/from/user/{userId}
     [HttpPost("books/{bookId}/reviews/from/user/{userId}")]
-    public async Task<IActionResult> SetReview(long bookId, long userId) {
-        throw new NotImplementedException();
+    public async Task<ActionResult<ShowReviewModel>> SetReview(long bookId, long userId, [FromBody] CreateReviewModel createReviewModel) {
+        var ret = await _repository.CreateReview(bookId, userId, createReviewModel);
+        if (ret == null) return NotFound();
+        return Ok(ret);
     }
 }

@@ -12,3 +12,16 @@ public class ReviewModel {
     public string Review { get; set; } = "";
     public int Qualification { get; set; }
 }
+
+public class CreateReviewModel {
+    public string Description { get; set; } = "";
+    public int Qualification { get; set; }
+}
+
+public class ShowReviewModel {
+    public ShowUserNaive User { get; set; }
+    // public ShowBookListedModel BookModel { get; set; }
+    public DateTime CreationTime { get; set; }
+    public string Review { get; set; } = "";
+    public int Qualification { get; set; }
+}
