@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VirtualLibrary.Interfaces;
 using VirtualLibrary.Models;
-using VirtualLibrary.Validators;
+using VirtualLibrary.Utils;
 
 namespace VirtualLibrary.Controllers;
 
@@ -11,10 +11,12 @@ namespace VirtualLibrary.Controllers;
 public class VirtualLibraryController : ControllerBase {
     private readonly IConfiguration _config;
     private readonly IVirtualLibraryInterface _repository;
-    public VirtualLibraryController(IConfiguration configuration, IVirtualLibraryInterface repository)
+    private readonly IEmailSender _email;
+    public VirtualLibraryController(IConfiguration configuration, IVirtualLibraryInterface repository, IEmailSender emailSender)
     {
         _config = configuration;
         _repository = repository;
+        _email = emailSender;
     }
 
     // POST /api/v1.0/library/users
@@ -119,6 +121,15 @@ public class VirtualLibraryController : ControllerBase {
         if (!MyValidators.IsValidIsbn(bookModel.Isbn)) return BadRequest(MyValidators.InvalidIsbn);
         var ret = await _repository.CreateBook(authorId, bookModel);
         if (ret == null) return NotFound();
+        var emails = await _repository.GetSubscriptorsEmails(authorId);
+        foreach (var email in emails) {
+            _ = _email.SendEmailAsync(
+                _config["EmailSender:Source"],
+                email,
+                _config["EmailSender:Topic"],
+                _config["EmailSender:Text"]
+            );
+        }
         return Ok(ret);
     }
 

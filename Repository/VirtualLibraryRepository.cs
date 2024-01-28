@@ -246,4 +246,13 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
             Elements = reviews
         };
     }
+
+    public async Task<List<string>> GetSubscriptorsEmails(long authorId) {
+        var context = await GetInstance();
+        return await context.SubsriptionModels
+            .Include(s => s.User)
+            .Where(s => s.AuthorId == authorId)
+            .Select(s => s.User.Email)
+            .ToListAsync();
+    }
 }

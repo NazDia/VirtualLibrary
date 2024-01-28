@@ -27,4 +27,5 @@ public interface IVirtualLibraryInterface: IRepository<VirtualLibraryContext> {
     );
     public Task<ShowReviewModel?> CreateReview(long bookId, long userId, CreateReviewModel createReviewModel);
     public Task<ListModels<ShowReviewModel>?> ListReviews(long bookId, int? qual, bool? sort, int offset, int limit);
+    public Task<List<string>> GetSubscriptorsEmails(long authorId);
 }

@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Globalization;
 
-namespace VirtualLibrary.Validators;
+namespace VirtualLibrary.Utils;
 
 public class MyValidators {
     public static string InvalidInterval { get; } = "Invalid interval.";

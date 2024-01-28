@@ -5,7 +5,7 @@ using VirtualLibrary.Interfaces;
 using VirtualLibrary.MiddleWare;
 using VirtualLibrary.Models;
 using VirtualLibrary.Repositories;
-using VirtualLibrary.Validators;
+using VirtualLibrary.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +16,7 @@ string cs = builder.Configuration.GetConnectionString("Default");
 builder.Services.AddDbContextFactory<VirtualLibraryContext>(opt => opt.UseSqlServer(cs), ServiceLifetime.Singleton);
 builder.Services.AddDbContext<VirtualLibraryContext>(opt => opt.UseSqlServer(cs));
 builder.Services.AddScoped<DbContextFactory<VirtualLibraryContext>>();
+builder.Services.AddScoped<IEmailSender, EmailSender>();
 // builder.Services.AddScoped<IRepository<VirtualLibraryContext>, VirtualLibraryRepository>();
 builder.Services.AddScoped<IVirtualLibraryInterface, VirtualLibraryRepository>();
 builder.Services.Configure<ErrHandlerMiddleWareOptions>(builder.Configuration.GetSection("MiddleWare"));
