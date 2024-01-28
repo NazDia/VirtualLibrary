@@ -5,6 +5,7 @@ using VirtualLibrary.Interfaces;
 using VirtualLibrary.MiddleWare;
 using VirtualLibrary.Models;
 using VirtualLibrary.Repositories;
+using VirtualLibrary.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 

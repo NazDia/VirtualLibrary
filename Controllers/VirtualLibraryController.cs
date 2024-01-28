@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VirtualLibrary.Interfaces;
 using VirtualLibrary.Models;
+using VirtualLibrary.Validators;
 
 namespace VirtualLibrary.Controllers;
 
@@ -19,6 +20,9 @@ public class VirtualLibraryController : ControllerBase {
     // POST /api/v1.0/library/users
     [HttpPost("users")]
     public async Task<ActionResult<LibraryUserModel>> CreateUser([FromBody] CreateUserModel user) {
+        if (!MyValidators.IsNotEmpty(user.Name)) return BadRequest(MyValidators.InvalidEmpty);
+        if (!MyValidators.IsValidEmail(user.Email)) return BadRequest(MyValidators.InvalidEmail);
+        if (user.Pfp_url != null && !MyValidators.IsValidUri(user.Pfp_url)) return BadRequest(MyValidators.InvalidUrl);
         _repository.CreateUser(user);
         return NoContent();
     }
@@ -26,6 +30,7 @@ public class VirtualLibraryController : ControllerBase {
     // PUT /api/v1.0/library/users/{userId}
     [HttpPut("users/{userId}")]
     public async Task<ActionResult<LibraryUserModel>> UpdatePfp(long userId, [FromBody] string pfp_url) {
+        if (!MyValidators.IsValidUri(pfp_url)) return BadRequest(MyValidators.InvalidUrl);
         var found = await _repository.SetPfp(userId, pfp_url);
         if (!found) return NotFound();
         return NoContent();
@@ -42,6 +47,7 @@ public class VirtualLibraryController : ControllerBase {
     // GET /api/v1.0/library/users?offset=int&limit=int
     [HttpGet("users")]
     public async Task<ActionResult<ListModels<LibraryUserModel>>> ListUsers(int offset, int limit) {
+        if (!MyValidators.IsValidInterval(offset, limit)) return BadRequest(MyValidators.InvalidInterval);
         var listModels = await _repository.ListUsers(offset, limit);
         return Ok(listModels);
     }
@@ -65,6 +71,9 @@ public class VirtualLibraryController : ControllerBase {
     // POST /api/v1.0/library/authors
     [HttpPost("authors")]
     public async Task<ActionResult<AuthorModel>> CreateAuthor([FromBody] CreateAuthorModel authorModel) {
+        if (!MyValidators.IsNotEmpty(authorModel.Name)) return BadRequest(MyValidators.InvalidEmpty);
+        if (!MyValidators.IsNotEmpty(authorModel.Nationality)) return BadRequest(MyValidators.InvalidEmpty);
+        if (!MyValidators.IsValidAge(authorModel.BirthDate)) return BadRequest(MyValidators.InvalidAge);
         _repository.CreateAuthor(authorModel);
         return NoContent();
     }
@@ -88,6 +97,7 @@ public class VirtualLibraryController : ControllerBase {
         int limit,
         bool? sort
     ) {
+        if (!MyValidators.IsValidInterval(offset, limit)) return BadRequest(MyValidators.InvalidInterval);
         var ret = await _repository.ListBooks(
             authorId,
             editorialName,
@@ -102,6 +112,10 @@ public class VirtualLibraryController : ControllerBase {
     // POST /api/v1.0/library/authors/{authorId}/books
     [HttpPost("authors/{authorId}/books")]
     public async Task<ActionResult<BookModel>> CreateBook(long authorId, [FromBody] CreateBookModel bookModel) {
+        if (!MyValidators.IsNotEmpty(bookModel.Editorial)) return BadRequest(MyValidators.InvalidEmpty);
+        if (!MyValidators.IsNotEmpty(bookModel.Name)) return BadRequest(MyValidators.InvalidEmpty);
+        if (!MyValidators.IsValidPageCount(bookModel.Pages)) return BadRequest(MyValidators.InvalidPagesCount);
+        if (!MyValidators.IsValidIsbn(bookModel.Isbn)) return BadRequest(MyValidators.InvalidIsbn);
         var ret = await _repository.CreateBook(authorId, bookModel);
         if (ret == null) return NotFound();
         return Ok(ret);
@@ -123,6 +137,7 @@ public class VirtualLibraryController : ControllerBase {
     // POST /api/v1.0/library/books/{bookId}/reviews/from/user/{userId}
     [HttpPost("books/{bookId}/reviews/from/user/{userId}")]
     public async Task<ActionResult<ShowReviewModel>> SetReview(long bookId, long userId, [FromBody] CreateReviewModel createReviewModel) {
+        if (!MyValidators.IsValidQualification(createReviewModel.Qualification)) return BadRequest(MyValidators.InvalidQualification);
         var ret = await _repository.CreateReview(bookId, userId, createReviewModel);
         if (ret == null) return NotFound();
         return Ok(ret);
