@@ -19,21 +19,21 @@ public class VirtualLibraryController : ControllerBase {
 
     // POST /api/v1.0/library/users
     [HttpPost("users")]
-    public async Task<ActionResult<LibraryUserModel>> CreateUser([FromBody] CreateUserModel user) {
+    public async Task<ActionResult<ShowUserModel>> CreateUser([FromBody] CreateUserModel user) {
         if (!MyValidators.IsNotEmpty(user.Name)) return BadRequest(MyValidators.InvalidEmpty);
         if (!MyValidators.IsValidEmail(user.Email)) return BadRequest(MyValidators.InvalidEmail);
         if (user.Pfp_url != null && !MyValidators.IsValidUri(user.Pfp_url)) return BadRequest(MyValidators.InvalidUrl);
-        _repository.CreateUser(user);
-        return NoContent();
+        var wuser = await _repository.CreateUser(user);
+        return Ok(wuser);
     }
 
     // PUT /api/v1.0/library/users/{userId}
     [HttpPut("users/{userId}")]
-    public async Task<ActionResult<LibraryUserModel>> UpdatePfp(long userId, [FromBody] string pfp_url) {
+    public async Task<ActionResult<ShowUserModel>> UpdatePfp(long userId, [FromBody] string pfp_url) {
         if (!MyValidators.IsValidUri(pfp_url)) return BadRequest(MyValidators.InvalidUrl);
         var found = await _repository.SetPfp(userId, pfp_url);
-        if (!found) return NotFound();
-        return NoContent();
+        if (found == null) return NotFound();
+        return Ok(found);
     }
 
     // DELETE /api/v1.0/library/users/{userId}
@@ -46,7 +46,7 @@ public class VirtualLibraryController : ControllerBase {
 
     // GET /api/v1.0/library/users?offset=int&limit=int
     [HttpGet("users")]
-    public async Task<ActionResult<ListModels<LibraryUserModel>>> ListUsers(int offset, int limit) {
+    public async Task<ActionResult<ListModels<ShowUserModel>>> ListUsers(int offset, int limit) {
         if (!MyValidators.IsValidInterval(offset, limit)) return BadRequest(MyValidators.InvalidInterval);
         var listModels = await _repository.ListUsers(offset, limit);
         return Ok(listModels);
@@ -70,17 +70,17 @@ public class VirtualLibraryController : ControllerBase {
 
     // POST /api/v1.0/library/authors
     [HttpPost("authors")]
-    public async Task<ActionResult<AuthorModel>> CreateAuthor([FromBody] CreateAuthorModel authorModel) {
+    public async Task<ActionResult<ShowAuthorModel>> CreateAuthor([FromBody] CreateAuthorModel authorModel) {
         if (!MyValidators.IsNotEmpty(authorModel.Name)) return BadRequest(MyValidators.InvalidEmpty);
         if (!MyValidators.IsNotEmpty(authorModel.Nationality)) return BadRequest(MyValidators.InvalidEmpty);
         if (!MyValidators.IsValidAge(authorModel.BirthDate)) return BadRequest(MyValidators.InvalidAge);
-        _repository.CreateAuthor(authorModel);
-        return NoContent();
+        var author = await _repository.CreateAuthor(authorModel);
+        return Ok(author);
     }
 
     // GET /api/v1.0/library/authors/{authorId}
     [HttpGet("authors/{authorId}")]
-    public async Task<ActionResult<AuthorModel>> GetAuthor(long authorId) {
+    public async Task<ActionResult<ShowAuthorModel>> GetAuthor(long authorId) {
         var ret = await _repository.DetailsAuthor(authorId);
         if (ret == null) return NotFound();
         return Ok(ret);
@@ -88,7 +88,7 @@ public class VirtualLibraryController : ControllerBase {
 
     // GET /api/v1.0/library/books?authorId=long?&editorialName=string?&before=DateTime?&after=DateTime?&offset=int&limit=int&sort=bool?
     [HttpGet("books")]
-    public async Task<ActionResult<ListModels<BookModel>>> ListBooks(
+    public async Task<ActionResult<ListModels<ShowBookListedModel>>> ListBooks(
         long? authorId,
         string? editorialName,
         DateTime? before,
@@ -112,7 +112,7 @@ public class VirtualLibraryController : ControllerBase {
 
     // POST /api/v1.0/library/authors/{authorId}/books
     [HttpPost("authors/{authorId}/books")]
-    public async Task<ActionResult<BookModel>> CreateBook(long authorId, [FromBody] CreateBookModel bookModel) {
+    public async Task<ActionResult<ShowBookListedModel>> CreateBook(long authorId, [FromBody] CreateBookModel bookModel) {
         if (!MyValidators.IsNotEmpty(bookModel.Editorial)) return BadRequest(MyValidators.InvalidEmpty);
         if (!MyValidators.IsNotEmpty(bookModel.Name)) return BadRequest(MyValidators.InvalidEmpty);
         if (!MyValidators.IsValidPageCount(bookModel.Pages)) return BadRequest(MyValidators.InvalidPagesCount);

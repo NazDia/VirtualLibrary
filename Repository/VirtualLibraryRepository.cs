@@ -55,21 +55,24 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         return true;
     }
 
-    public async void CreateUser(CreateUserModel createUserModel) {
+    public async Task<ShowUserModel> CreateUser(CreateUserModel createUserModel) {
         var context = GetInstance();
         LibraryUserModel libraryUserModel = new UserCreationMapper().map(createUserModel);
         var wcontext = await context;
         wcontext.Add(libraryUserModel);
         await wcontext.SaveChangesAsync();
+        return (new ShowUserMapper()).map(libraryUserModel);
     }
 
-    public async Task<bool> SetPfp(long userId, string Pfp_url) {
+    public async Task<ShowUserModel?> SetPfp(long userId, string Pfp_url) {
         var context = await GetInstance();
         var user = await context.LibraryUserModels.FindAsync(userId);
-        if (user == null) return false;
+        if (user == null) return null;
         user.Pfp_url = Pfp_url;
+        context.LibraryUserModels.Attach(user);
         context.Entry(user).State = EntityState.Modified;
-        return true;
+        await context.SaveChangesAsync();
+        return (new ShowUserMapper()).map(user);
     }
 
     public async Task<bool> CreateSubscription(long userId, long authorId) {
@@ -99,12 +102,13 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         return true;
     }
 
-    public async void CreateAuthor(CreateAuthorModel createAuthorModel) {
+    public async Task<ShowAuthorModel?> CreateAuthor(CreateAuthorModel createAuthorModel) {
         var context = GetInstance();
         AuthorModel authorModel = new CreateAuthorMapper().map(createAuthorModel);
         var wcontext = await context;
         wcontext.AuthorModels.Add(authorModel);
         await wcontext.SaveChangesAsync();
+        return (new ShowAuthorMapper()).map(authorModel);
     }
 
     public async Task<ShowAuthorModel?> DetailsAuthor(long authorId) {
