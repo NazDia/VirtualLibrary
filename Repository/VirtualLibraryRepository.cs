@@ -23,17 +23,25 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
 
     
     public async Task<ListModels<ShowUserModel>> ListUsers(int offset, int limit) {
-        IMapper<LibraryUserModel, ShowUserModel> showUserMapper = new ShowUserMapper();
+        // IMapper<LibraryUserModel, ShowUserModel> showUserMapper = new ShowUserMapper();
         var context = await GetInstance();
         var users = await context.LibraryUserModels
             .Include(u => u.Subsriptions)
             .Skip(offset)
             .Take(limit)
+            .Select(u => new ShowUserModel {
+                Name = u.Name,
+                Pfp_url = u.Pfp_url,
+                Id = u.Id,
+                CreationTime = u.CreationTime,
+                Email = u.Email,
+                SubscriptionCount = u.Subsriptions.Count
+            })
             .ToListAsync();
         ListModels<ShowUserModel> listModels = new ListModels<ShowUserModel> { 
             Limit = limit,
             Offset = offset,
-            Elements = showUserMapper.lMap(users)
+            Elements = users
         };
         return listModels;
     }
@@ -105,9 +113,22 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         var author = await context.AuthorModels
             .Include(a => a.Books)
             .Include(a => a.Subsriptions)
+            .Select(a => new ShowAuthorModel {
+                Id = a.Id,
+                Name = a.Name,
+                Nationality = a.Nationality,
+                SubsriptionCount = a.Subsriptions.Count,
+                BirthDate = a.BirthDate,
+                Books = a.Books.Select(b => new ShowBookAuthoredModel {
+                    Isbn = b.Isbn,
+                    Name = b.Name,
+                    PublicationDate = b.PublicationDate
+                })
+                // Books = (new ShowBookAuthoredMapper() as IMapper<BookModel, ShowBookAuthoredModel>).lMap(a.Books)
+            })
             .FirstOrDefaultAsync(a => a.Id == authorId);
         if (author == null) return null;
-        return showAuthorMapper.map(author);
+        return author;
     }
 
     public async Task<ShowBookListedModel?> CreateBook(long authorId, CreateBookModel createBookModel) {
@@ -129,11 +150,13 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         DateTime? before,
         DateTime? after,
         int offset,
-        int limit
+        int limit,
+        bool? sort
     ) {
         var context = await GetInstance();
-        var books = await context.BookModels
+        var semiBooks = context.BookModels
             .Include(b => b.AuthorModel)
+            .Include(b => b.Reviews)
             .Where(b => 
                 (authorId == null || authorId == b.AuthorModelId) &&
                 (editorialName == null || editorialName == b.Editorial) &&
@@ -142,11 +165,24 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
             )
             .Skip(offset)
             .Take(limit)
-            .ToListAsync();
+            .Select(b => new ShowBookListedModel {
+                Qualification = (int)b.Reviews.Average(r => r.Qualification),
+                Name = b.Name,
+                AuthorName = b.AuthorModel.Name,
+                Editorial = b.Editorial,
+                Isbn = b.Isbn
+            });
+        if (sort != null && (bool)sort) {
+            semiBooks = semiBooks.OrderBy(b => b.Qualification);
+        }
+        else if (sort != null && !(bool)sort) {
+            semiBooks = semiBooks.OrderByDescending(b => b.Qualification);
+        }
+        var books = await semiBooks.ToListAsync();
         ListModels<ShowBookListedModel> listModels = new ListModels<ShowBookListedModel> {
             Offset = offset,
             Limit = limit,
-            Elements = (new ShowBookListedMapper() as IMapper<BookModel, ShowBookListedModel>).lMap(books)
+            Elements = books
         };
         return listModels;
     }
@@ -191,12 +227,19 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         else if (sort != null && !(bool)sort) {
             semiReviews = semiReviews.OrderByDescending(r => r.CreationTime);
         }
-        var reviews = await semiReviews.ToListAsync();
+        var reviews = await semiReviews
+            .Select(r => new ShowReviewModel {
+                User = (new ShowUserNaiveMapper()).map(r.LibraryUserModel),
+                Review = r.Review,
+                Qualification = r.Qualification,
+                CreationTime = r.CreationTime,
+            })
+            .ToListAsync();
         if (reviews == null) return null;
         return new ListModels<ShowReviewModel> {
             Offset = offset,
             Limit = limit,
-            Elements = (new ShowReviewMapper() as IMapper<ReviewModel, ShowReviewModel>).lMap(reviews)
+            Elements = reviews
         };
     }
 }

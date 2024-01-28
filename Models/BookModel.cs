@@ -47,6 +47,7 @@ public class ShowBookListedModel {
     public string Isbn { get; set; } = "";
     public string Editorial { get; set; } = "";
     public string AuthorName { get; set; } = "";
+    public int Qualification { get; set; }
 }
 
 public class ShowBookAuthoredModel {

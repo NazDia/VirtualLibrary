@@ -27,9 +27,10 @@ public class CreateAuthorModel {
 }
 
 public class ShowAuthorModel {
+    internal long Id { get; set; }
     public string Name { get; set; } = "";
     public string Nationality { get; set; } = "";
     public DateTime BirthDate { get; set; }
     public int SubsriptionCount { get; set; }
-    public ICollection<ShowBookAuthoredModel> Books { get; set; }
+    public IEnumerable<ShowBookAuthoredModel> Books { get; set; }
 }

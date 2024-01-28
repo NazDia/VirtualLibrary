@@ -22,7 +22,8 @@ public interface IVirtualLibraryInterface: IRepository<VirtualLibraryContext> {
         DateTime? before,
         DateTime? after,
         int offset,
-        int limit
+        int limit,
+        bool? sort
     );
     public Task<ShowReviewModel?> CreateReview(long bookId, long userId, CreateReviewModel createReviewModel);
     public Task<ListModels<ShowReviewModel>?> ListReviews(long bookId, int? qual, bool? sort, int offset, int limit);

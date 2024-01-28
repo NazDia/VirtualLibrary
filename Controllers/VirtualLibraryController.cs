@@ -104,7 +104,8 @@ public class VirtualLibraryController : ControllerBase {
             before,
             after,
             offset,
-            limit
+            limit,
+            sort
         );
         return Ok(ret);
     }
