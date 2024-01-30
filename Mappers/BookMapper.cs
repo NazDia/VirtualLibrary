@@ -32,7 +32,8 @@ public class ShowBookListedMapper : IMapper<BookModel, ShowBookListedModel>
             Name = obj.Name,
             AuthorName = obj.AuthorModel.Name,
             Editorial = obj.Editorial,
-            Isbn = obj.Isbn
+            Isbn = obj.Isbn,
+            Id = obj.Id
         };
     }
 
@@ -49,7 +50,8 @@ public class ShowBookAuthoredMapper : IMapper<BookModel, ShowBookAuthoredModel>
         return new ShowBookAuthoredModel {
             Name = obj.Name,
             PublicationDate = obj.PublicationDate,
-            Isbn = obj.Isbn
+            Isbn = obj.Isbn,
+            Id = obj.Id
         };
     }
 

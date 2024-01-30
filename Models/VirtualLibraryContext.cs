@@ -20,10 +20,14 @@ public class VirtualLibraryContext: DbContext {
             .WithOne(r => r.BookModel);
         modelBuilder.Entity<AuthorModel>()
             .HasMany(a => a.Subsriptions)
-            .WithOne(s => s.Author);
+            .WithOne(s => s.Author)
+            .HasForeignKey(s => s.AuthorId)
+            .OnDelete(DeleteBehavior.Cascade);
         modelBuilder.Entity<LibraryUserModel>()
             .HasMany(u => u.Subsriptions)
-            .WithOne(s => s.User);
+            .WithOne(s => s.User)
+            .HasForeignKey(s => s.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
         base.OnModelCreating(modelBuilder);
     }
     public DbSet<AuthorModel> AuthorModels { get; set; }

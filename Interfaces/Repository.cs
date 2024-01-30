@@ -11,8 +11,8 @@ public interface IVirtualLibraryInterface: IRepository<VirtualLibraryContext> {
     public Task<bool> DeleteUser(long userId);
     public Task<ShowUserModel?> CreateUser(CreateUserModel createUserModel);
     public Task<ShowUserModel?> SetPfp(long userId, string url);
-    public Task<bool> CreateSubscription(long userId, long authorId);
-    public Task<bool> DeleteSubscription(long userId, long authorId);
+    public Task<bool?> CreateSubscription(long userId, long authorId);
+    public Task<bool?> DeleteSubscription(long userId, long authorId);
     public Task<ShowAuthorModel?> CreateAuthor(CreateAuthorModel createAuthorModel);
     public Task<ShowAuthorModel?> DetailsAuthor(long authorId);
     public Task<ShowBookListedModel?> CreateBook(long authorId, CreateBookModel createBookModel);

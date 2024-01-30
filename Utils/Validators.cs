@@ -43,6 +43,7 @@ public class MyValidators {
     }
 
     public static bool IsValidUri(string uri) {
+        if (uri == "") return false;
         return Uri.TryCreate(uri, UriKind.RelativeOrAbsolute, out _);
     }
 
@@ -60,7 +61,7 @@ public class MyValidators {
         string[] split1 = isbn.Split('-');
         long sum = 0;
         int exp = 0;
-        for (int i = split1.Length -2; i >= 0 ; i--) {
+        for (int i = split1.Length - 1; i >= 0 ; i--) {
             if (!long.TryParse(split1[i], out long semi)) return false;
             sum += semi * (long)Math.Pow(10, exp);
             exp += split1[i].Length;
@@ -79,7 +80,7 @@ public class MyValidators {
             checksum += (int)(sum % 10) * (count % 2 == 0 ? 3 : 1);
             count += 1;
         }
-        return (checksum % 10 + remainder) % 10 == 0;
+        return (checksum + remainder) % 10 == 0;
     }
 
     public static bool IsValidQualification(int qualification) {

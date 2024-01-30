@@ -61,12 +61,16 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         var wcontext = await context;
         wcontext.Add(libraryUserModel);
         await wcontext.SaveChangesAsync();
+        libraryUserModel.Subsriptions = [];
         return (new ShowUserMapper()).map(libraryUserModel);
     }
 
     public async Task<ShowUserModel?> SetPfp(long userId, string Pfp_url) {
         var context = await GetInstance();
-        var user = await context.LibraryUserModels.FindAsync(userId);
+        var user = await context.LibraryUserModels
+            .Include(u => u.Subsriptions)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+        // var user = await context.LibraryUserModels.FindAsync(userId);
         if (user == null) return null;
         user.Pfp_url = Pfp_url;
         context.LibraryUserModels.Attach(user);
@@ -75,15 +79,18 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         return (new ShowUserMapper()).map(user);
     }
 
-    public async Task<bool> CreateSubscription(long userId, long authorId) {
+    public async Task<bool?> CreateSubscription(long userId, long authorId) {
         var context = await GetInstance();
         var context1 = await GetInstance();
+        var context2 = await GetInstance();
         var user = context.LibraryUserModels.FindAsync(userId);
         var author = context1.AuthorModels.FindAsync(authorId);
+        var subs = context2.SubsriptionModels.FindAsync(userId, authorId);
         var wuser = await user;
         if (wuser == null) return false;
         var wauthor = await author;
         if (wauthor == null) return false;
+        if (await subs != null) return null;
         SubsriptionModel subsriptionModel = new SubsriptionModel {
             UserId = userId,
             AuthorId = authorId,
@@ -93,10 +100,22 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         return true;
     }
 
-    public async Task<bool> DeleteSubscription(long userId, long authorId) {
+    public async Task<bool?> DeleteSubscription(long userId, long authorId) {
         var context = await GetInstance();
-        var subscription = await context.SubsriptionModels.FindAsync(userId, authorId);
+        var context1 = await GetInstance();
+        var context2 = await GetInstance();
+        // var context = await GetInstance();
+        var user = context.LibraryUserModels.FindAsync(userId);
+        var author = context1.AuthorModels.FindAsync(authorId);
+        var subs = context2.SubsriptionModels.FindAsync(userId, authorId);
+        var wuser = await user;
+        if (wuser == null) return null;
+        var wauthor = await author;
+        if (wauthor == null) return null;
+        var subscription = await subs;
         if (subscription == null) return false;
+        // var subscription = await context.SubsriptionModels.FindAsync(userId, authorId);
+        // if (subscription == null) return false;
         context.Remove(subscription);
         await context.SaveChangesAsync();
         return true;
@@ -114,6 +133,10 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
     public async Task<ShowAuthorModel?> DetailsAuthor(long authorId) {
         ShowAuthorMapper showAuthorMapper = new ShowAuthorMapper();
         var context = await GetInstance();
+        var ss = await context.SubsriptionModels.ToListAsync();
+        var s = await context.AuthorModels
+            .Include(a => a.Subsriptions)
+            .ToListAsync();
         var author = await context.AuthorModels
             .Include(a => a.Books)
             .Include(a => a.Subsriptions)
@@ -126,7 +149,8 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
                 Books = a.Books.Select(b => new ShowBookAuthoredModel {
                     Isbn = b.Isbn,
                     Name = b.Name,
-                    PublicationDate = b.PublicationDate
+                    PublicationDate = b.PublicationDate,
+                    Id = b.Id
                 })
                 // Books = (new ShowBookAuthoredMapper() as IMapper<BookModel, ShowBookAuthoredModel>).lMap(a.Books)
             })
@@ -158,6 +182,14 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
         bool? sort
     ) {
         var context = await GetInstance();
+        // var testbooks = await context.BookModels
+        //     .Include(b => b.Reviews)
+        //     .Select(b => (int)b.Reviews.Count)
+        //     .ToListAsync();
+        // var testbooks2 = await context.BookModels
+        //     .Select(b => b.Reviews.DefaultIfEmpty().Average(r => r == null ? 0 : r.Qualification))
+        //     // .DefaultIfEmpty()
+        //     .ToListAsync();
         var semiBooks = context.BookModels
             .Include(b => b.AuthorModel)
             .Include(b => b.Reviews)
@@ -170,11 +202,12 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
             .Skip(offset)
             .Take(limit)
             .Select(b => new ShowBookListedModel {
-                Qualification = (int)b.Reviews.Average(r => r.Qualification),
+                Qualification = (int)b.Reviews.DefaultIfEmpty().Average(r => r == null ? 0 : r.Qualification),
                 Name = b.Name,
                 AuthorName = b.AuthorModel.Name,
                 Editorial = b.Editorial,
-                Isbn = b.Isbn
+                Isbn = b.Isbn,
+                Id = b.Id
             });
         if (sort != null && (bool)sort) {
             semiBooks = semiBooks.OrderBy(b => b.Qualification);
@@ -194,15 +227,20 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
     public async Task<ShowReviewModel?> CreateReview(long bookId, long userId, CreateReviewModel createReviewModel) {
         var context = await GetInstance();
         var context1 = await GetInstance();
-        var book = context.BookModels.FindAsync(bookId);
+        var context2 = await GetInstance();
+        var book = context.BookModels.Include(b => b.Reviews).FirstOrDefaultAsync(b => b.Id == bookId);
         var user = context1.LibraryUserModels.FindAsync(userId);
+        var sreview = context2.ReviewModels.FindAsync(userId, bookId);
         var wuser = await user;
+        var wbook = await book;
         if (await book == null) return null;
         if (wuser == null) return null;
+        if (await sreview != null) return null;
         var review = (new CreateReviewMapper()).map(createReviewModel);
         review.BookModelId = bookId;
         review.LibraryUserModelId = userId;
         context.ReviewModels.Add(review);
+
         await context.SaveChangesAsync();
         review.LibraryUserModel = wuser;
         var ret = (new ShowReviewMapper()).map(review);
@@ -249,6 +287,10 @@ public class VirtualLibraryRepository : IVirtualLibraryInterface
 
     public async Task<List<string>> GetSubscriptorsEmails(long authorId) {
         var context = await GetInstance();
+        var subs = await context.SubsriptionModels
+            .Include(s => s.User)
+            .Where(s => s.AuthorId == authorId)
+            .ToListAsync();
         return await context.SubsriptionModels
             .Include(s => s.User)
             .Where(s => s.AuthorId == authorId)

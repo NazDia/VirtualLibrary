@@ -24,15 +24,17 @@ public class VirtualLibraryController : ControllerBase {
     public async Task<ActionResult<ShowUserModel>> CreateUser([FromBody] CreateUserModel user) {
         if (!MyValidators.IsNotEmpty(user.Name)) return BadRequest(MyValidators.InvalidEmpty);
         if (!MyValidators.IsValidEmail(user.Email)) return BadRequest(MyValidators.InvalidEmail);
-        if (user.Pfp_url != null && !MyValidators.IsValidUri(user.Pfp_url)) return BadRequest(MyValidators.InvalidUrl);
+        if (user.Pfp_url == null) user.Pfp_url = "";
+        if (user.Pfp_url != "" && !MyValidators.IsValidUri(user.Pfp_url)) return BadRequest(MyValidators.InvalidUrl);
         var wuser = await _repository.CreateUser(user);
         return Ok(wuser);
     }
 
     // PUT /api/v1.0/library/users/{userId}
     [HttpPut("users/{userId}")]
-    public async Task<ActionResult<ShowUserModel>> UpdatePfp(long userId, [FromBody] string pfp_url) {
-        if (!MyValidators.IsValidUri(pfp_url)) return BadRequest(MyValidators.InvalidUrl);
+    public async Task<ActionResult<ShowUserModel>> UpdatePfp(long userId, [FromBody] string? pfp_url) {
+        if (pfp_url == null) pfp_url = "";
+        if (pfp_url != "" && !MyValidators.IsValidUri(pfp_url)) return BadRequest(MyValidators.InvalidUrl);
         var found = await _repository.SetPfp(userId, pfp_url);
         if (found == null) return NotFound();
         return Ok(found);
@@ -58,7 +60,8 @@ public class VirtualLibraryController : ControllerBase {
     [HttpPost("users/{userId}/subscribe-to-author/{authorId}")]
     public async Task<IActionResult> SubscribeToAuthor(long userId, long authorId) {
         var found = await _repository.CreateSubscription(userId, authorId);
-        if (!found) return NotFound();
+        if (found == null) return BadRequest();
+        if (!(bool)found) return NotFound();
         return NoContent();
     }
 
@@ -66,7 +69,8 @@ public class VirtualLibraryController : ControllerBase {
     [HttpDelete("users/{userId}/subscribe-to-author/{authorId}")]
     public async Task<IActionResult> Unsubscribe(long userId, long authorId) {
         var found = await _repository.DeleteSubscription(userId, authorId);
-        if (!found) return NotFound();
+        if (found == null) return BadRequest();
+        if (!(bool)found) return NotFound();
         return NoContent();
     }
 
@@ -119,6 +123,7 @@ public class VirtualLibraryController : ControllerBase {
         if (!MyValidators.IsNotEmpty(bookModel.Name)) return BadRequest(MyValidators.InvalidEmpty);
         if (!MyValidators.IsValidPageCount(bookModel.Pages)) return BadRequest(MyValidators.InvalidPagesCount);
         if (!MyValidators.IsValidIsbn(bookModel.Isbn)) return BadRequest(MyValidators.InvalidIsbn);
+        if (!MyValidators.IsValidUri(bookModel.Url)) return BadRequest(MyValidators.InvalidUrl);
         var ret = await _repository.CreateBook(authorId, bookModel);
         if (ret == null) return NotFound();
         var emails = await _repository.GetSubscriptorsEmails(authorId);
@@ -140,7 +145,10 @@ public class VirtualLibraryController : ControllerBase {
         int? reviewType,
         bool? sort,
         int offset,
-        int limit) {
+        int limit
+    ) {
+        if (reviewType != null && !MyValidators.IsValidQualification((int)reviewType)) return BadRequest(MyValidators.InvalidQualification);
+        if (!MyValidators.IsValidInterval(offset, limit)) return BadRequest(MyValidators.InvalidInterval);
         var ret = await _repository.ListReviews(bookId, reviewType, sort, offset, limit);
         if (ret == null) return NotFound();
         return Ok(ret);

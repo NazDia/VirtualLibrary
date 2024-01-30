@@ -35,7 +35,8 @@ public class ShowAuthorMapper : IMapper<AuthorModel, ShowAuthorModel>
             BirthDate = obj.BirthDate,
             Nationality = obj.Nationality,
             SubsriptionCount = obj.Subsriptions.Count,
-            Books = _mapper.lMap(obj.Books)
+            Books = _mapper.lMap(obj.Books),
+            Id = obj.Id
         };
     }
 

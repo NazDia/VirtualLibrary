@@ -16,8 +16,8 @@ public class AuthorModel {
     public string Nationality { get; set; } = "";
     [Required]
     public DateTime BirthDate { get; set; }
-    public ICollection<BookModel> Books { get; set; }
-    public ICollection<SubsriptionModel> Subsriptions { get; set; }
+    public ICollection<BookModel> Books { get; set; } = [];
+    public ICollection<SubsriptionModel> Subsriptions { get; set; } = [];
 }
 
 public class CreateAuthorModel {
@@ -27,10 +27,10 @@ public class CreateAuthorModel {
 }
 
 public class ShowAuthorModel {
-    internal long Id { get; set; }
+    public long Id { get; set; }
     public string Name { get; set; } = "";
     public string Nationality { get; set; } = "";
     public DateTime BirthDate { get; set; }
     public int SubsriptionCount { get; set; }
-    public IEnumerable<ShowBookAuthoredModel> Books { get; set; }
+    public IEnumerable<ShowBookAuthoredModel> Books { get; set; } = [];
 }

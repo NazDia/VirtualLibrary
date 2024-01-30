@@ -43,6 +43,7 @@ public class CreateBookModel {
 
 
 public class ShowBookListedModel {
+    public long Id { get; set; }
     public string Name { get; set; } = "";
     public string Isbn { get; set; } = "";
     public string Editorial { get; set; } = "";
@@ -51,6 +52,7 @@ public class ShowBookListedModel {
 }
 
 public class ShowBookAuthoredModel {
+    public long Id { get; set; }
     public string Name { get; set; } = "";
     public string Isbn { get; set; } = "";
     public DateTime PublicationDate { get; set; }

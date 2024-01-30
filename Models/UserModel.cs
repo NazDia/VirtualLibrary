@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace VirtualLibrary.Models;
@@ -23,10 +24,8 @@ public class LibraryUserModel {
 
 [PrimaryKey(nameof(UserId), nameof(AuthorId))]
 public class SubsriptionModel {
-    [Required]
     public long UserId { get; set; }
     public LibraryUserModel User { get; set; }
-    [Required]
     public long AuthorId { get; set; }
     public AuthorModel Author { get; set; }
 }
